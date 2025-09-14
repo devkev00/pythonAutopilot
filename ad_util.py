@@ -54,7 +54,7 @@ def apply_wall_to_grid(grid, walls, grid_interval):
         steps = int(max(abs(x1 - x0), abs(y1 - y0)))
         for i in range(steps + 1):
             t = i / steps
-            x = x0 + (x1 - x0) * t
+            x = x0 + (x1 - x0) * t # 선형 보간법으로 t 비율 지점 x좌표 구하기
             y = y0 + (y1 - y0) * t
             gx = int(x // grid_interval)
             gy = int(y // grid_interval)
