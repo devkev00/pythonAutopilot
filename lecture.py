@@ -15,19 +15,12 @@ def point_to_segment_distance(px, py, x1, y1, x2, y2):
 
 pygame.init()
 
-white = (255, 255, 255)
-red= (255, 0, 0)
-blue = (0, 0, 255)
-gray = (180, 180, 180)
-green = (0, 255, 0)
-black = (0, 0, 0)
-
 screen_width = 800 # pixel 단위
 screen_height = 800
 screen = pygame.display.set_mode((screen_width * 2, screen_height))
 
 ad_rect = pygame.Surface((100, 300), pygame.SRCALPHA)
-pygame.draw.rect(ad_rect, green, (0, 0, 100, 300))
+pygame.draw.rect(ad_rect, ad_util.green, (0, 0, 100, 300))
 rotated_rect = pygame.transform.rotate(ad_rect, 50)
 new_rect = rotated_rect.get_rect(center=(500, 500))
 
@@ -79,7 +72,13 @@ while running:
             mouse_x, mouse_y = pygame.mouse.get_pos()
             mouse_grid = (int(mouse_x // GRID_INTERVAL), int(mouse_y // GRID_INTERVAL)) # 마우스 픽셀 기준 좌표를 셀 좌표로 변환
             if event.button == 1:
-                path.append(mouse_grid)
+                if mouse_x >= screen_width:
+                    continue
+                car_grid = (int(car_x // GRID_INTERVAL), int(car_y // GRID_INTERVAL))
+                mouse_grid = (int(mouse_x // GRID_INTERVAL), int(mouse_y // GRID_INTERVAL))
+                path = ad_util.ad_dijkstra(grid, car_grid, mouse_grid) # 최단 경로 알고리즘: 다익스트라
+                path_index = 0
+
     if path and path_index < len(path):
         _x, _y = path[path_index]
         target_x = _x * GRID_INTERVAL + GRID_INTERVAL // 2 # 그리드 셀의 정중앙으로 가게 하기 위함
@@ -97,8 +96,8 @@ while running:
             v_y = dy / dist
             move_distance = car_speed * dt
             if move_distance > dist:
-                car_x = mouse_x
-                car_y = mouse_y
+                car_x = target_x
+                car_y = target_y
             else:
                 car_x = car_x + v_x * move_distance
                 car_y = car_y + v_y * move_distance
@@ -108,9 +107,9 @@ while running:
     if is_collision:
         car_speed = 0
         print("충돌")
-        screen.fill(red)
+        screen.fill(ad_util.red)
     else:
-        screen.fill(black)
+        screen.fill(ad_util.black)
 
     rotated_car_image = pygame.transform.rotate(car_image, -np.degrees(car_angle))
     # 회전은 반시계가 + 방향이지만 좌표계는 시계방향이 + 방향임
@@ -119,7 +118,7 @@ while running:
 
     for wall in walls:
         wall_start_x, wall_start_y, wall_end_x, wall_end_y, wall_thickness = wall
-        pygame.draw.line(screen, green, (wall_start_x, wall_start_y), (wall_end_x, wall_end_y), wall_thickness)
+        pygame.draw.line(screen, ad_util.green, (wall_start_x, wall_start_y), (wall_end_x, wall_end_y), wall_thickness)
 
         # 그리드 map 그리기
         car_grid = (int(car_x // GRID_INTERVAL), int(car_y // GRID_INTERVAL))
@@ -131,8 +130,10 @@ while running:
                     pygame.draw.rect(screen, ad_util.red, rect)
                 elif (x, y) == mouse_grid:
                     pygame.draw.rect(screen, ad_util.blue, rect)
+                elif (x, y) in path:
+                    pygame.draw.rect(screen, ad_util.green, rect)
                 elif grid[y, x] == 1:
-                    pygame.draw.rect(screen, gray, rect)
+                    pygame.draw.rect(screen, ad_util.gray, rect)
                 elif grid[y, x] == 2: # margin 그리기
                     pygame.draw.rect(screen, ad_util.light_gray, rect)
                 else:
